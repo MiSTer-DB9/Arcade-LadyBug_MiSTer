@@ -38,3 +38,5 @@ set_global_assignment -name VHDL_FILE ladybug_char.vhd
 set_global_assignment -name VHDL_FILE ladybug_addr_dec.vhd
 set_global_assignment -name VHDL_FILE ladybug.vhd
 set_global_assignment -name SYSTEMVERILOG_FILE "Arcade-LadyBug.sv"
+set_global_assignment -name VERILOG_FILE joydb9md.v
+set_global_assignment -name VERILOG_FILE joydb15.v
