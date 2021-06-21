@@ -269,15 +269,14 @@ wire  [7:0] ioctl_dout;
 wire  [7:0] ioctl_din;
 
 wire [15:0] joy1_USB,joy2_USB;
-
 wire [15:0] joy1 = joystick_0;
 wire [15:0] joy2 = joystick_1;
 
 wire [21:0] gamma_bus;
 
 // CO S2 S1 U D L R 
-wire [31:0] joystick_0 = joydb_1ena ? {joydb_1[11]|(joydb_1[10]&joydb_1[5]),joydb_1[9],joydb_1[10],joydb_1[3:0]} : joystick_0_USB;
-wire [31:0] joystick_1 = joydb_2ena ? {joydb_2[11]|(joydb_2[10]&joydb_2[5]),joydb_2[10],joydb_2[9],joydb_2[3:0]} : joydb_1ena ? joystick_0_USB : joystick_1_USB;
+wire [31:0] joystick_0 = joydb_1ena ? {joydb_1[11]|(joydb_1[10]&joydb_1[5]),joydb_1[9],joydb_1[10],joydb_1[3:0]} : joy1_USB;
+wire [31:0] joystick_1 = joydb_2ena ? {joydb_2[11]|(joydb_2[10]&joydb_2[5]),joydb_2[10],joydb_2[9],joydb_2[3:0]} : joydb_1ena ? joy1_USB : joy2_USB;
 
 wire [15:0] joydb_1 = JOY_FLAG[2] ? JOYDB9MD_1 : JOY_FLAG[1] ? JOYDB15_1 : '0;
 wire [15:0] joydb_2 = JOY_FLAG[2] ? JOYDB9MD_2 : JOY_FLAG[1] ? JOYDB15_2 : '0;
@@ -333,7 +332,7 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 	.ioctl_index(ioctl_index),
 
 	.joystick_0(joy1_USB),
-	.joystick_1(joy2_USB)
+	.joystick_1(joy2_USB),
 	.joy_raw(joydb_1[5:0] | joydb_2[5:0]),
 );
 
