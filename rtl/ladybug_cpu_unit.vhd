@@ -50,6 +50,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 entity ladybug_cpu_unit is
   port (
@@ -76,7 +77,19 @@ entity ladybug_cpu_unit is
     cs10_n_o       : out std_logic;
     cs11_n_o       : out std_logic;
     cs12_n_o       : out std_logic;
-    cs13_n_o       : out std_logic
+    cs13_n_o       : out std_logic;
+
+    dn_addr        : in  std_logic_vector(15 downto 0);
+    dn_data        : in  std_logic_vector(7 downto 0);
+    dn_wr          : in  std_logic;
+    dn_index       : in  std_logic_vector(7 downto 0);
+
+    pause          : in  std_logic;
+
+    hs_address     : in  std_logic_vector(15 downto 0);
+    hs_data_out    : out std_logic_vector(7 downto 0);
+    hs_data_in     : in  std_logic_vector(7 downto 0);
+    hs_write       : in  std_logic
   );
 
 end ladybug_cpu_unit;
@@ -107,6 +120,8 @@ architecture struct of ladybug_cpu_unit is
   signal ram_cpu_cs_n_s : std_logic;
 
   signal vcc_s          : std_logic;
+  
+  signal decrypt_prom_wr : std_logic;
 
 begin
   vcc_s <= '1';
@@ -126,7 +141,7 @@ begin
     port map (
       RESET_n    => res_n_i,
       CLK_n      => clk_20mhz_i,
-      CLK_EN_SYS => t80_clk_en_s,
+      CLK_EN_SYS => t80_clk_en_s and not pause,
       WAIT_n     => wait_n_s,
       INT_n      => int_n_s,
       NMI_n      => nmi_n_s,
@@ -149,16 +164,24 @@ begin
   -----------------------------------------------------------------------------
   -- The CPU RAM
   -----------------------------------------------------------------------------
-	cpu_ram_b : entity work.ladybug_cpu_ram
-	port map (
-		clk_i    => clk_20mhz_i,
-		clk_en_i => clk_en_4mhz_i,
-		a_i      => a_s(11 downto 0),
-		cs_n_i   => cs_n_s(6),
-		we_n_i   => wr_n_s,
-		d_i      => d_from_cpu_s,
-		d_o      => d_from_ram_s
-	);
+   cpu_ram_b : entity work.ladybug_cpu_ram
+   port map (
+      clk1_i    => clk_20mhz_i,
+      clk_en1_i => clk_en_4mhz_i,
+      a1_i      => a_s(11 downto 0),
+      cs1_n_i   => cs_n_s(6),
+      we1_n_i   => wr_n_s,
+      d1_i      => d_from_cpu_s,
+      d1_o      => d_from_ram_s,
+
+      clk2_i    => clk_20mhz_i,
+      clk_en2_i => '1',
+      a2_i      => hs_address(11 downto 0),
+      cs2_n_i   => '0',
+      we2_n_i   => not hs_write,
+      d2_i      => hs_data_in,
+      d2_o      => hs_data_out
+   );
 
   -----------------------------------------------------------------------------
   -- The Address Decoder
@@ -213,12 +236,19 @@ begin
   -- Decrytion PROMs
   -----------------------------------------------------------------------------
 
-  decrypt_prom : entity work.prom_decrypt
-    port map (
-      CLK    => clk_20mhz_i,
-      ADDR   => rom_cpu_d_i,
-      DATA   => d_decrypted_s
-    );
+  decrypt_prom_wr <= '1' when (dn_wr = '1' and dn_index(7 downto 0) = "00000010" and dn_addr(8) = '1') else '0';
+
+  decrypt_prom : entity work.dpram generic map(8,8)
+  port map (
+     clock_a   => clk_20mhz_i,
+     address_a => dn_addr(7 downto 0),
+     data_a    => dn_data,
+     wren_a    => decrypt_prom_wr,
+
+     clock_b   => clk_20mhz_i,
+     address_b => rom_cpu_d_i,
+     q_b       => d_decrypted_s
+  );
 
   -----------------------------------------------------------------------------
   -- Only opcodes (i.e. instruction fetches) have to be decrypted

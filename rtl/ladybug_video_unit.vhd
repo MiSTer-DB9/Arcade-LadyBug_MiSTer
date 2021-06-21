@@ -85,7 +85,19 @@ entity ladybug_video_unit is
     rom_char_d_i     : in  std_logic_vector(15 downto 0);
     -- Sprite ROM Interface ---------------------------------------------------
     rom_sprite_a_o   : out std_logic_vector(11 downto 0);
-    rom_sprite_d_i   : in  std_logic_vector(15 downto 0)
+    rom_sprite_d_i   : in  std_logic_vector(15 downto 0);
+
+    dn_addr           : in  std_logic_vector(15 downto 0);
+    dn_data           : in  std_logic_vector(7 downto 0);
+    dn_wr             : in  std_logic;
+    dn_index          : in  std_logic_vector(7 downto 0);
+
+    pause          : in  std_logic;
+
+    hs_address     : in  std_logic_vector(15 downto 0);
+    hs_data_out    : out std_logic_vector(7 downto 0);
+    hs_data_in     : in  std_logic_vector(7 downto 0);
+    hs_write       : in  std_logic
   );
 
 end ladybug_video_unit;
@@ -178,9 +190,12 @@ begin
 	   hblank_o      => hblank_o,
       crg_o         => crg_s,
       rom_char_a_o  => rom_char_a_o,
-      rom_char_d_i  => rom_char_d_i
+      rom_char_d_i  => rom_char_d_i,
+      hs_address    => hs_address,
+      hs_data_in    => hs_data_in,
+      hs_data_out   => hs_data_out,
+      hs_write      => hs_write
     );
-
 
   -----------------------------------------------------------------------------
   -- Sprite Module
@@ -210,7 +225,11 @@ begin
       blank_i          => blank_s,
       sig_o            => sig_s,
       rom_sprite_a_o   => rom_sprite_a_o,
-      rom_sprite_d_i   => rom_sprite_d_i
+      rom_sprite_d_i   => rom_sprite_d_i,
+      dn_addr          => dn_addr,
+      dn_data          => dn_data,
+      dn_wr            => dn_wr,
+      dn_index         => dn_index
     );
 
 
@@ -226,9 +245,12 @@ begin
       sig_i         => sig_s,
       rgb_r_o       => rgb_r_o,
       rgb_g_o       => rgb_g_o,
-      rgb_b_o       => rgb_b_o
+      rgb_b_o       => rgb_b_o,
+      dn_addr       => dn_addr,
+      dn_data       => dn_data,
+      dn_wr         => dn_wr,
+      dn_index      => dn_index
     );
-
 
   -----------------------------------------------------------------------------
   -- Bus Multiplexer
