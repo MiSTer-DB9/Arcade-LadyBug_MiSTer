@@ -30,7 +30,7 @@ module emu
 	input         RESET,
 
 	//Must be passed to hps_io module
-	inout  [45:0] HPS_BUS,
+	inout  [48:0] HPS_BUS,
 
 	//Base video clock. Usually equals to CLK_SYS.
 	output        CLK_VIDEO,
@@ -53,13 +53,14 @@ module emu
 	output        VGA_F1,
 	output [1:0]  VGA_SL,
 	output        VGA_SCALER, // Force VGA scaler
+	output        VGA_DISABLE, // analog out is off
 
 	input  [11:0] HDMI_WIDTH,
 	input  [11:0] HDMI_HEIGHT,
 	output        HDMI_FREEZE,
 
 `ifdef MISTER_FB
-	// Use framebuffer in DDRAM (USE_FB=1 in qsf)
+	// Use framebuffer in DDRAM
 	// FB_FORMAT:
 	//    [2:0] : 011=8bpp(palette) 100=16bpp 101=24bpp 110=32bpp
 	//    [3]   : 0=16bits 565 1=16bits 1555
@@ -181,8 +182,9 @@ assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQM
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 
-assign VGA_F1    = 0;
-assign VGA_SCALER= 0;
+assign VGA_F1 = 0;
+assign VGA_SCALER = 0;
+assign VGA_DISABLE = 0;
 wire         CLK_JOY = CLK_50M;         //Assign clock between 40-50Mhz
 wire   [2:0] JOY_FLAG  = {status[30],status[31],status[29]}; //Assign 3 bits of status (31:29) o (63:61)
 wire         JOY_CLK, JOY_LOAD, JOY_SPLIT, JOY_MDSEL;
@@ -192,10 +194,10 @@ assign       USER_OUT  = JOY_FLAG[2] ? {3'b111,JOY_SPLIT,3'b111,JOY_MDSEL} : JOY
 assign       USER_MODE = JOY_FLAG[2:1] ;
 assign       USER_OSD  = joydb_1[10] & joydb_1[6];
 
-assign LED_USER  = ioctl_download;
-assign LED_DISK  = 0;
+assign LED_USER = ioctl_download;
+assign LED_DISK = 0;
 assign LED_POWER = 0;
-assign BUTTONS   = 0;
+assign BUTTONS = 0;
 assign AUDIO_MIX = 0;
 assign HDMI_FREEZE = 0;
 assign FB_FORCE_BLANK = 0;
@@ -210,6 +212,7 @@ localparam CONF_STR = {
 	"A.LADYBG;;",
 	"H0OJK,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
 	"H1H0O2,Orientation,Vert,Horz;",
+	"H1H0O6,Vertical flip,Off,On;",
 	"O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
 	"-;",
 	"H2OR,Autosave Hiscores,Off,On;",
@@ -421,6 +424,8 @@ always @(posedge clk_40) begin
 end
 
 wire rotate_ccw = 1;
+wire video_rotated;
+wire flip = status[6];
 screen_rotate screen_rotate (.*);
 
 arcade_video #(240,6) arcade_video
