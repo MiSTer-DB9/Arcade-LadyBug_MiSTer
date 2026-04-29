@@ -40,5 +40,3 @@ set_global_assignment -name VHDL_FILE rtl/ladybug.vhd
 set_global_assignment -name VERILOG_FILE rtl/pause.v
 set_global_assignment -name VERILOG_FILE rtl/hiscore.v
 set_global_assignment -name SYSTEMVERILOG_FILE "Arcade-LadyBug.sv"
-set_global_assignment -name VERILOG_FILE joydb9md.v
-set_global_assignment -name VERILOG_FILE joydb15.v
